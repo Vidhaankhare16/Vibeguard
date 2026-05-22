@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeGuard — Security Audit for AI-Generated Apps</title>
+  <meta name="description" content="One command. Full security audit. Built for the vibe coding era." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── NAV ────────────────────────────────────────────────── -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">🛡️</div>
+        <span class="nav-logo-text">vibeguard</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#install">Install</a>
+        <a href="#vulnerabilities">Coverage</a>
+      </div>
+      <a href="https://github.com/Vidhaankhare16/Vibeguard" target="_blank" class="nav-cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ───────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+      <div class="hero-glow hero-glow-1"></div>
+      <div class="hero-glow hero-glow-2"></div>
+    </div>
+    <div class="hero-inner">
+
+      <!-- Left: copy -->
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          Built for the vibe coding era
+        </div>
+
+        <h1 class="hero-title">
+          Your AI built it fast.<br>
+          <span class="hero-gradient">We make sure it's not a disaster.</span>
+        </h1>
+
+        <p class="hero-sub">
+          One command. Extraordinary security audit. Taint analysis, slopsquatting detection,
+          BOLA scanning, git history secrets — 200+ checks purpose-built for AI-generated code.
+        </p>
+
+        <div class="install-pill">
+          <span class="install-prompt">$</span>
+          <span class="install-cmd" id="hero-cmd">npx @vidhaankhare/vibeguard scan .</span>
+          <button class="install-copy" onclick="copyCmd()" title="Copy to clipboard" aria-label="Copy command">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+
+        <a href="https://github.com/Vidhaankhare16/Vibeguard" class="btn-outline" target="_blank">
+          View on GitHub →
+        </a>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-num">200+</span>
+            <span class="hero-stat-label">Security checks</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">10</span>
+            <span class="hero-stat-label">Vulnerability layers</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">0</span>
+            <span class="hero-stat-label">Config required</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: terminal mockup -->
+      <div class="hero-visual">
+        <div class="terminal">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title-text">vibeguard — scan</span>
+          </div>
+          <div class="terminal-body">
+            <div class="tl"><span class="tc-green">$</span> <span class="tc-white">npx @vidhaankhare/vibeguard scan .</span></div>
+            <div class="tl tc-cyan">
+              &nbsp;██╗   ██╗██╗██████╗ ███████╗ ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗
+            </div>
+            <div class="tl tc-cyan">
+              &nbsp;╚██╗ ██╔╝██║██████╔╝█████╗  ██║  ███╗██║   ██║███████║██████╔╝██║  ██║
+            </div>
+            <div class="tl tc-dim">&nbsp;  V I B E G U A R D  ·  Zero-Trust AI Code Auditor v1.0</div>
+            <div class="tl">&nbsp;</div>
+            <div class="tl tc-dim">  Running in non-interactive mode...</div>
+            <div class="tl tc-dim">  ✓ Phase 1: Supply-chain &amp; hallucination audit</div>
+            <div class="tl tc-dim">  ✓ Phase 2: AST call-graph &amp; access control</div>
+            <div class="tl tc-dim">  ✓ Phase 3: Prompt injection boundary audit</div>
+            <div class="tl tc-dim">  ✓ Phase 4: Secrets &amp; default config audit</div>
+            <div class="tl">&nbsp;</div>
+            <div class="tl"><span class="tc-red tc-bold">CRITICAL</span>&nbsp;&nbsp;<span class="tc-red">3 findings</span></div>
+            <div class="tl"><span class="tc-orange tc-bold">HIGH    </span>&nbsp;&nbsp;<span class="tc-orange">7 findings</span></div>
+            <div class="tl"><span class="tc-yellow tc-bold">MEDIUM  </span>&nbsp;&nbsp;<span class="tc-yellow">12 findings</span></div>
+            <div class="tl"><span class="tc-blue tc-bold">LOW     </span>&nbsp;&nbsp;<span class="tc-blue">9 findings</span></div>
+            <div class="tl">&nbsp;</div>
+            <div class="tl tc-bold">Score: <span class="tc-red">32</span><span class="tc-dim">/100</span> <span class="tc-badge-crit">⚠ CRITICAL RISK</span></div>
+            <div class="tl">&nbsp;</div>
+            <div class="tl tc-dim">  Reports → vibeguard-report.json · vibeguard-report.md</div>
+            <div class="tl"><span class="tc-cursor">█</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── CRISIS STATS ────────────────────────────────────────── -->
+  <section class="crisis">
+    <div class="section-inner">
+      <h2 class="crisis-title">The vibe coding security crisis is real</h2>
+      <div class="crisis-grid">
+        <div class="crisis-card">
+          <span class="crisis-num">2.74×</span>
+          <p>more security vulnerabilities in AI-generated code vs human-written code</p>
+          <span class="crisis-source">CodeRabbit, 2025</span>
+        </div>
+        <div class="crisis-card">
+          <span class="crisis-num">45%</span>
+          <p>of AI-generated applications contain exploitable OWASP vulnerabilities</p>
+          <span class="crisis-source">Veracode, 2025</span>
+        </div>
+        <div class="crisis-card">
+          <span class="crisis-num">5,000</span>
+          <p>vibe-coded apps found with virtually no security or authentication</p>
+          <span class="crisis-source">Dor Zvi research, 2026</span>
+        </div>
+        <div class="crisis-card">
+          <span class="crisis-num">322%</span>
+          <p>more privilege escalation paths in AI code than human-written code</p>
+          <span class="crisis-source">Apiiro, 2025</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ────────────────────────────────────────────── -->
+  <section class="features" id="features">
+    <div class="section-inner">
+      <div class="section-eyebrow">What makes it different</div>
+      <h2 class="section-title">Not just another linter.<br>An extraordinary audit.</h2>
+      <p class="section-sub">Traditional tools were built before AI coding existed. VibeGuard is built for the patterns AI actually produces.</p>
+
+      <div class="features-grid">
+
+        <div class="feature-card feature-large">
+          <div class="feature-icon">🔍</div>
+          <h3>Cross-file taint analysis</h3>
+          <p>Tracks untrusted data from every entry point — HTTP params, request bodies, env vars — through your entire codebase to dangerous sinks like SQL queries, shell commands, and file writes.</p>
+          <div class="code-block">
+            <div class="code-label">Taint path detected</div>
+            <pre><code><span class="c-dim">// Entry: GET /api/orders/:id</span>
+<span class="c-red">req.params.id</span>  <span class="c-dim">← untrusted</span>
+  → router.js:23
+  → orderService.js:87
+  → <span class="c-red">db.query(`SELECT * WHERE id = ${id}`)</span>
+<span class="c-orange">⚠ SQL injection — no ownership check</span></code></pre>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI pattern signatures</h3>
+          <p>A database of known-bad patterns AI models produce repeatedly across unrelated projects. Mass assignment, algorithm confusion, unsafe deserialization — caught before they ship.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>Slopsquatting detection</h3>
+          <p>AI tools hallucinate package names. Attackers register them. VibeGuard verifies every dependency against registries, checks download anomalies, and flags suspicious new packages.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🕰️</div>
+          <h3>Git history secrets</h3>
+          <p>A secret deleted from your codebase still lives in git history. VibeGuard scans every commit, including dangling objects from force pushes, and verifies whether found credentials are still active.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💉</div>
+          <h3>Prompt injection mapping</h3>
+          <p>For apps that integrate LLMs, VibeGuard maps every path where user-controlled data flows into a prompt without sanitization — the #1 vulnerability in OWASP's LLM Top 10.</p>
+        </div>
+
+        <div class="feature-card feature-large">
+          <div class="feature-icon">📊</div>
+          <h3>Reports built for developers</h3>
+          <p>Not a wall of CVE IDs. Every finding includes a CVSS score, the exact taint path, and a copy-paste ready fix. Exported as JSON for CI/CD and a shareable Markdown report.</p>
+          <div class="report-preview">
+            <div class="report-row">
+              <span class="severity-badge sev-critical">CRITICAL</span>
+              <div class="report-row-info">
+                <div class="report-row-title">BOLA — Unauthenticated access to any user's data</div>
+                <div class="report-row-meta">src/api/users.js:47 · CVSS 9.8</div>
+              </div>
+            </div>
+            <div class="report-row">
+              <span class="severity-badge sev-high">HIGH</span>
+              <div class="report-row-info">
+                <div class="report-row-title">JWT algorithm confusion — alg:none accepted</div>
+                <div class="report-row-meta">src/middleware/auth.js:12 · CVSS 8.1</div>
+              </div>
+            </div>
+            <div class="report-row">
+              <span class="severity-badge sev-high">HIGH</span>
+              <div class="report-row-info">
+                <div class="report-row-title">Active AWS key in git history (commit a3f9d2)</div>
+                <div class="report-row-meta">Verified live · CVSS 7.5</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ────────────────────────────────────────── -->
+  <section class="how" id="how-it-works">
+    <div class="section-inner">
+      <div class="section-eyebrow">How it works</div>
+      <h2 class="section-title">Three steps to a full audit</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-body">
+            <h3>Install &amp; run</h3>
+            <p>No config files. No accounts. No setup. Point it at your project directory and it figures out the rest — language, framework, dependencies, git history.</p>
+            <div class="cmd-snippet"><span class="cmd-prompt">$</span> npx @vidhaankhare/vibeguard scan .</div>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-body">
+            <h3>Deep analysis runs</h3>
+            <p>VibeGuard performs 4 phases of analysis in parallel — supply-chain hallucination detection, AST call-graph mapping, prompt injection boundary audit, and secrets scanning.</p>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-body">
+            <h3>Get your report</h3>
+            <p>A prioritized security report with CVSS scores, taint paths, and copy-paste fixes. Exported as JSON (for CI/CD) and Markdown (for your team). Security score included.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── INSTALL ─────────────────────────────────────────────── -->
+  <section class="install-section" id="install">
+    <div class="section-inner">
+      <div class="section-eyebrow">Install</div>
+      <h2 class="section-title">Run anywhere, zero setup</h2>
+      <p class="section-sub">VibeGuard is an npm package. Run it instantly with npx, install it globally, or drop it into any CI/CD pipeline.</p>
+
+      <div class="install-grid">
+        <div class="install-card">
+          <div class="install-card-header">
+            <span class="install-tag">npx</span>
+            <h3>Run without installing</h3>
+          </div>
+          <p>The fastest way to audit any project. No global install needed — npx pulls the latest version automatically.</p>
+          <div class="install-cmd-block">
+            <span class="icp">$</span>
+            <span>npx @vidhaankhare/vibeguard scan .</span>
+            <button class="copy-btn" onclick="copyToClipboard('npx @vidhaankhare/vibeguard scan .')" title="Copy">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="install-card">
+          <div class="install-card-header">
+            <span class="install-tag">global</span>
+            <h3>Install globally</h3>
+          </div>
+          <p>Install once and run <code>vibeguard</code> from any project directory on your machine.</p>
+          <div class="install-cmd-block">
+            <span class="icp">$</span>
+            <span>npm install -g @vidhaankhare/vibeguard</span>
+            <button class="copy-btn" onclick="copyToClipboard('npm install -g @vidhaankhare/vibeguard')" title="Copy">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </div>
+          <div class="install-cmd-block mt-2">
+            <span class="icp">$</span>
+            <span>vibeguard scan .</span>
+          </div>
+        </div>
+
+        <div class="install-card">
+          <div class="install-card-header">
+            <span class="install-tag">CI/CD</span>
+            <h3>GitHub Actions &amp; pipelines</h3>
+          </div>
+          <p>Drop into any CI pipeline with <code>--yes</code> to skip interactive prompts. Works in GitHub Actions, GitLab CI, and more.</p>
+          <div class="install-cmd-block">
+            <span class="icp">$</span>
+            <span>npx @vidhaankhare/vibeguard scan . --yes</span>
+            <button class="copy-btn" onclick="copyToClipboard('npx @vidhaankhare/vibeguard scan . --yes')" title="Copy">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── COVERAGE ────────────────────────────────────────────── -->
+  <section class="coverage" id="vulnerabilities">
+    <div class="section-inner">
+      <div class="section-eyebrow">Coverage</div>
+      <h2 class="section-title">10 layers of security analysis</h2>
+      <div class="coverage-grid">
+        <div class="coverage-item">
+          <span class="cov-num">01</span>
+          <div class="cov-body">
+            <h4>AI-Specific Vulnerabilities</h4>
+            <p>Slopsquatting, AI pattern signatures, prompt injection, business logic flaws</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">02</span>
+          <div class="cov-body">
+            <h4>Authorization &amp; Access Control</h4>
+            <p>BOLA/IDOR, broken function-level auth, mass assignment</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">03</span>
+          <div class="cov-body">
+            <h4>Injection Vulnerabilities</h4>
+            <p>SQL, command, path traversal, SSRF, NoSQL injection</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">04</span>
+          <div class="cov-body">
+            <h4>Secrets &amp; Credentials</h4>
+            <p>Live codebase, git history, dangling commits, live verification</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">05</span>
+          <div class="cov-body">
+            <h4>Authentication &amp; Sessions</h4>
+            <p>JWT flaws, session security, password handling, OAuth misconfig</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">06</span>
+          <div class="cov-body">
+            <h4>Data Exposure</h4>
+            <p>Excessive API responses, sensitive data in transit, insecure file serving</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">07</span>
+          <div class="cov-body">
+            <h4>Security Misconfiguration</h4>
+            <p>Missing headers, CORS, error handling, dependency CVEs</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">08</span>
+          <div class="cov-body">
+            <h4>Client-Side Vulnerabilities</h4>
+            <p>XSS, prototype pollution, insecure deserialization, clickjacking</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">09</span>
+          <div class="cov-body">
+            <h4>Infrastructure &amp; Deployment</h4>
+            <p>Cloud misconfig, container security, CI/CD pipeline secrets</p>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <span class="cov-num">10</span>
+          <div class="cov-body">
+            <h4>Supply Chain</h4>
+            <p>Dependency confusion, typosquatting, license compliance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ────────────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="cta-inner">
+      <div class="cta-glow"></div>
+      <h2 class="cta-title">Run your first audit in 30 seconds</h2>
+      <p class="cta-sub">No account. No config. No excuses.</p>
+      <div class="cta-cmd">
+        <span class="cta-prompt">$</span>
+        <span class="cta-text">npx @vidhaankhare/vibeguard scan .</span>
+      </div>
+      <div class="cta-actions">
+        <a href="https://github.com/Vidhaankhare16/Vibeguard" class="btn-primary" target="_blank">View on GitHub</a>
+        <a href="https://www.npmjs.com/package/@vidhaankhare/vibeguard" class="btn-outline" target="_blank">npm package →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <span>🛡️</span>
+        <span class="footer-logo-text">vibeguard</span>
+      </div>
+      <p class="footer-tag">Zero-trust security audit for the vibe coding era.</p>
+      <nav class="footer-links">
+        <a href="https://github.com/Vidhaankhare16/Vibeguard" target="_blank">GitHub</a>
+        <a href="https://www.npmjs.com/package/@vidhaankhare/vibeguard" target="_blank">npm</a>
+        <a href="mailto:hello@vibeguard.dev">Contact</a>
+      </nav>
+      <p class="footer-copy">© 2026 VibeGuard · Open source, MIT licensed.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

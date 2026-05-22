@@ -1,0 +1,48 @@
+{
+  "name": "@vidhaankhare/vibeguard",
+  "version": "1.0.0",
+  "description": "Zero-trust vulnerability scanner and security auditor for vibe-coded (AI-generated) applications",
+  "main": "bin/index.js",
+  "bin": {
+    "vibeguard": "bin/index.js"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node bin/index.js scan ."
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md"
+  ],
+  "keywords": [
+    "security",
+    "vibecoding",
+    "vibe-coding",
+    "vulnerability",
+    "scanner",
+    "audit",
+    "ai",
+    "sast",
+    "taint-analysis",
+    "ai-security",
+    "slopsquatting",
+    "prompt-injection"
+  ],
+  "homepage": "https://vibeguard.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vidhaankhare16/Vibeguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Vidhaankhare16/Vibeguard/issues"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
+  },
+  "author": "VibeGuard Security",
+  "license": "MIT"
+}

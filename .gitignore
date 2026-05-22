@@ -1,0 +1,8 @@
+node_modules/
+npm-debug.log*
+.DS_Store
+*.local
+vibeguard-report.json
+vibeguard-report.md
+.claude/
+.vercel/
