@@ -19,7 +19,8 @@ No account. No config. No setup. Point it at any project directory.
 ## Project Structure
 
 ```
-vibeguard-cli/   ← The CLI tool (npm package: vibeguard)
+vibeguard-cli/   ← The CLI tool (npm package: @vidhaankhare/vibeguard)
+skills/          ← OpenClaw agent skill (drop-in security auditing for AI agents)
 website/         ← Marketing landing page (open index.html in browser)
 ```
 
@@ -45,6 +46,34 @@ vibeguard scan . --yes
 vibeguard --help
 vibeguard scan --help
 ```
+
+---
+
+## Use with OpenClaw (agentic harness)
+
+VibeGuard ships as a drop-in [OpenClaw](https://openclaw.ai) skill, so any OpenClaw
+agent can security-audit code it just generated — closing the loop between
+*AI writes code* and *AI ships insecure code*.
+
+```bash
+# From this repo — copy the skill into your OpenClaw skills directory
+cp -r skills/vibeguard ~/.openclaw/skills/vibeguard
+
+# Or into a single agent's workspace
+cp -r skills/vibeguard <workspace>/skills/vibeguard
+```
+
+Then just tell your agent things like:
+
+> "vibe-check this project before we deploy"
+> "scan the code you just wrote and fix anything critical"
+
+The skill runs `npx -y @vidhaankhare/vibeguard scan . --yes` non-interactively, parses
+`vibeguard-report.json`, and reports the 0–100 security score with severity-ranked
+findings — trimmed to the top 5 on chat surfaces like WhatsApp/Telegram/Discord. It can
+also apply the suggested fixes and re-scan, reporting the score delta.
+
+See [`skills/vibeguard/SKILL.md`](skills/vibeguard/SKILL.md) for the full skill definition.
 
 ---
 
