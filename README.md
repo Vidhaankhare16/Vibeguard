@@ -151,7 +151,7 @@ repository secret to run the AI pass on every build.
 ```bash
 cd vibeguard-cli
 npm install
-npm test                 # 66 assertions, no network required
+npm test                 # 71 assertions, no network required
 node bin/index.js scan .
 ```
 

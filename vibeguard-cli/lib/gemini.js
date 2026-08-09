@@ -164,7 +164,7 @@ async function callGemini({ apiKey, model, prompt, signal, timeoutMs = 90_000 })
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.1,
+          temperature: 0,
           responseMimeType: 'application/json',
           responseSchema: RESPONSE_SCHEMA,
           maxOutputTokens: 8192,
@@ -250,6 +250,20 @@ export function explainApiError(err) {
 }
 
 /**
+ * Sampling makes an empty result unreliable: on a batch that genuinely contains
+ * flaws, the model returns nothing roughly one run in five. A miss reads as
+ * "no issues found", which is the one wrong answer a security tool must not
+ * give confidently — so an empty batch is confirmed with a second call before
+ * it is believed. Batches that already produced findings are not re-sent, which
+ * keeps the extra cost to the quiet cases only.
+ */
+async function callWithEmptyConfirmation({ apiKey, model, prompt }) {
+  const first = await callGemini({ apiKey, model, prompt });
+  if (first.length > 0) return first;
+  return callGemini({ apiKey, model, prompt });
+}
+
+/**
  * Run the AI pass. Never throws — returns { findings, model, error, batches }.
  * `onProgress(done, total)` fires as batches complete.
  */
@@ -274,7 +288,7 @@ export async function analyzeWithGemini({
 
   for (const candidate of candidates) {
     try {
-      firstResult = await callGemini({ apiKey, model: candidate, prompt: batchToPrompt(batches[0]) });
+      firstResult = await callWithEmptyConfirmation({ apiKey, model: candidate, prompt: batchToPrompt(batches[0]) });
       activeModel = candidate;
       break;
     } catch (err) {
@@ -305,7 +319,7 @@ export async function analyzeWithGemini({
 
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          findings.push(...(await callGemini({ apiKey, model: activeModel, prompt })));
+          findings.push(...(await callWithEmptyConfirmation({ apiKey, model: activeModel, prompt })));
           break;
         } catch (err) {
           const retryable = err.status === 429 || err.status === 503 || /abort/i.test(String(err.message));

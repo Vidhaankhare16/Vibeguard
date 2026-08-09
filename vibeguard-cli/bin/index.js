@@ -17,7 +17,7 @@ import {
 } from '../lib/config.js';
 import { banner, log, createSpinner, BOLD, DIM, RESET, CYAN, YELLOW, GREEN, RED } from '../lib/ui.js';
 
-const VERSION = '2.0.0';
+const VERSION = '2.0.1';
 const program = new Command();
 
 program
@@ -233,7 +233,10 @@ async function runScan(targetPath, options) {
     const { key, source } = resolveApiKey(options.key, target);
     if (!key) {
       log.warn('No Gemini API key — running pattern analysis only.');
-      log.detail(`Set one with ${CYAN}vibeguard auth <key>${RESET} (free key: https://aistudio.google.com/apikey)`);
+      log.detail('The AI pass adds what patterns cannot see: authorization gaps, broken');
+      log.detail('ownership checks, and logic flaws specific to your code.');
+      log.detail(`Enable it once:  ${CYAN}vibeguard auth <key>${RESET}   ${DIM}free key: https://aistudio.google.com/apikey${RESET}`);
+      log.detail(`Or silence this:  ${CYAN}vibeguard scan . --no-ai${RESET}`);
     } else {
       const model = resolveModel(options.model);
       const aiSpinner = createSpinner(`Gemini reviewing high-risk files with ${model}…`);

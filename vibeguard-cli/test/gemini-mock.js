@@ -93,6 +93,34 @@ check('unknown confidence defaults to medium', () => assert.equal(result.finding
 check('findings tagged as gemini', () => assert.ok(result.findings.every((f) => f.source === 'gemini')));
 check('ids assigned', () => assert.ok(result.findings.every((f) => f.id.startsWith('VG-AI-'))));
 
+// ------------------------------------------------- empty-result confirmation
+
+console.log('\nGemini transport — empty-result confirmation');
+
+// Sampling means an empty response is unreliable; a quiet batch must be
+// re-asked before the tool reports "no issues found".
+const REAL = {
+  file: 'src/api/admin.js', line: 2, title: 'Missed on the first sample',
+  severity: 'HIGH', category: 'Access Control', description: 'x', fix: 'y', confidence: 'high',
+};
+
+let n = 0;
+globalThis.fetch = async () => ok({ findings: n++ === 0 ? [] : [REAL] });
+const recovered = await analyzeWithGemini({ files: FILES, staticFindings: [], apiKey: 't', model: 'gemini-3.6-flash' });
+check('empty first sample is re-asked', () => assert.equal(n, 2));
+check('finding recovered on the second sample', () => assert.equal(recovered.findings.length, 1));
+
+n = 0;
+globalThis.fetch = async () => { n++; return ok({ findings: [] }); };
+const genuinelyClean = await analyzeWithGemini({ files: FILES, staticFindings: [], apiKey: 't', model: 'gemini-3.6-flash' });
+check('two empties are believed', () => assert.equal(n, 2));
+check('genuinely clean stays clean', () => assert.deepEqual(genuinelyClean.findings, []));
+
+n = 0;
+globalThis.fetch = async () => { n++; return ok({ findings: [REAL] }); };
+await analyzeWithGemini({ files: FILES, staticFindings: [], apiKey: 't', model: 'gemini-3.6-flash' });
+check('a productive batch is not re-sent', () => assert.equal(n, 1));
+
 // ---------------------------------------------------------------- fallbacks
 
 console.log('\nGemini transport — failure handling');
