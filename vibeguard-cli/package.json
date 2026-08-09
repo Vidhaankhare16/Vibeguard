@@ -1,7 +1,7 @@
 {
   "name": "@vidhaankhare/vibeguard",
-  "version": "1.0.0",
-  "description": "Zero-trust vulnerability scanner and security auditor for vibe-coded (AI-generated) applications",
+  "version": "2.0.0",
+  "description": "Gemini-powered security auditor for AI-generated code. Scans a folder and writes a Markdown vulnerability report into it.",
   "main": "bin/index.js",
   "bin": {
     "vibeguard": "bin/index.js"
@@ -11,12 +11,15 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node bin/index.js scan ."
+    "start": "node bin/index.js scan .",
+    "doctor": "node bin/index.js doctor",
+    "test": "node test/run.js && node test/gemini-mock.js"
   },
   "files": [
     "bin/",
     "lib/",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "keywords": [
     "security",
@@ -26,13 +29,15 @@
     "scanner",
     "audit",
     "ai",
+    "gemini",
     "sast",
-    "taint-analysis",
+    "static-analysis",
     "ai-security",
     "slopsquatting",
-    "prompt-injection"
+    "prompt-injection",
+    "owasp"
   ],
-  "homepage": "https://vibeguard.dev",
+  "homepage": "https://github.com/Vidhaankhare16/Vibeguard#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Vidhaankhare16/Vibeguard.git"
@@ -43,6 +48,6 @@
   "dependencies": {
     "commander": "^14.0.3"
   },
-  "author": "VibeGuard Security",
+  "author": "Vidhaan Khare",
   "license": "MIT"
 }

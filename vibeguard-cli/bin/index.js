@@ -1,96 +1,322 @@
 #!/usr/bin/env node
+// ============================================================
+// VibeGuard CLI
+// ============================================================
 
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
 import { Command } from 'commander';
-import { renderHeader, BOLD, GREEN, YELLOW, RED, RESET, HR } from '../lib/ascii.js';
-import {
-  runSpinner, logSuccess, logWarning, logStep, getSampleVulnerabilities, setupScanParams
-} from '../lib/scanner.js';
-import { generateReportFiles, printSummaryBox } from '../lib/reporter.js';
 
+import { collectFiles, readFiles } from '../lib/walk.js';
+import { scanAll, sortFindings, dedupe, scoreOf, verdictOf } from '../lib/rules.js';
+import { analyzeWithGemini, probeKey, probeGeneration } from '../lib/gemini.js';
+import { writeReports, printSummary, MD_FILENAME } from '../lib/report.js';
+import {
+  resolveApiKey, resolveModel, writeConfig, maskKey, CONFIG_FILE, DEFAULT_MODEL,
+} from '../lib/config.js';
+import { banner, log, createSpinner, BOLD, DIM, RESET, CYAN, YELLOW, GREEN, RED } from '../lib/ui.js';
+
+const VERSION = '2.0.0';
 const program = new Command();
 
 program
   .name('vibeguard')
-  .description('Zero-trust vulnerability scanner for vibe-coded (AI-generated) applications')
-  .version('1.0.0', '-v, --version')
-  .addHelpText('after', `
+  .description('Gemini-powered security auditing for AI-generated code')
+  .version(VERSION, '-v, --version')
+  .addHelpText(
+    'after',
+    `
 Examples:
-  $ vibeguard scan .
-  $ vibeguard scan ./my-app
-  $ vibeguard scan . --yes
-  $ npx vibeguard scan .
-`);
+  $ vibeguard auth <your-gemini-api-key>   Save a Gemini key for future scans
+  $ vibeguard scan .                       Audit the current directory
+  $ vibeguard scan ./my-app                Audit another folder (report lands there)
+  $ vibeguard scan . --no-ai               Pattern engine only, no API calls
+  $ vibeguard scan . --fail-on high        Exit non-zero on high+ findings (CI)
+  $ vibeguard doctor                       Check key, quota and available models
+
+Get a free Gemini API key at https://aistudio.google.com/apikey
+`
+  );
+
+// ------------------------------------------------------------------ scan
 
 program
-  .command('scan [path]')
-  .description('Run a full security audit on a project directory')
-  .option('-y, --yes', 'Skip interactive prompts and use defaults')
-  .action(async (targetPath, options) => {
-    if (options.yes && !process.argv.includes('--yes')) {
-      process.argv.push('--yes');
+  .command('scan [path]', { isDefault: true })
+  .description('Audit a directory for security vulnerabilities and write a Markdown report into it')
+  .option('-k, --key <key>', 'Gemini API key (overrides env and saved config)')
+  .option('-m, --model <model>', `Gemini model to use (default: ${DEFAULT_MODEL})`)
+  .option('--no-ai', 'Skip the Gemini pass and run the pattern engine only')
+  .option('--no-json', 'Write only the Markdown report')
+  .option('-o, --output <file>', `Markdown report filename (default: ${MD_FILENAME})`)
+  .option('-c, --concurrency <n>', 'Parallel Gemini requests', '4')
+  .option('--ai-budget <chars>', 'Max characters of source sent to Gemini', '400000')
+  .option('--max-files <n>', 'Stop discovery after N files', '4000')
+  .option('--fail-on <severity>', 'Exit 1 if a finding at or above this severity exists (critical|high|medium|low)')
+  .option('--quiet', 'Suppress the banner and per-finding output')
+  .action(runScan);
+
+// ------------------------------------------------------------------ auth
+
+program
+  .command('auth [key]')
+  .description('Save a Gemini API key to ~/.vibeguard/config.json')
+  .option('-m, --model <model>', 'Also set the default model')
+  .action(async (key, options) => {
+    if (!key && !options.model) {
+      const { key: existing, source } = resolveApiKey(null);
+      if (existing) {
+        log.ok(`A key is already configured: ${BOLD}${maskKey(existing)}${RESET} ${DIM}(from ${source})${RESET}`);
+      } else {
+        log.warn('No Gemini API key configured.');
+      }
+      log.plain('');
+      log.info(`Usage: ${CYAN}vibeguard auth <your-api-key>${RESET}`);
+      log.info(`Get one free at ${CYAN}https://aistudio.google.com/apikey${RESET}`);
+      return;
     }
-    await runAudit(targetPath || '.');
+
+    const patch = {};
+    if (key) patch.apiKey = key;
+    if (options.model) patch.model = options.model;
+    const file = writeConfig(patch);
+
+    if (key) {
+      const spinner = createSpinner('Verifying key with the Gemini API…');
+      const probe = await probeKey(key);
+      if (probe.ok) {
+        spinner.succeed(`Key verified — ${probe.models.length} models available.`);
+      } else {
+        spinner.warn(`Key saved, but verification failed: ${probe.error.summary}`);
+        log.detail(probe.error.action);
+      }
+    }
+    log.ok(`Saved to ${CYAN}${file}${RESET}`);
   });
 
-program.parse(process.argv);
+// ------------------------------------------------------------------ doctor
 
-async function runAudit(cliTargetPath) {
-  renderHeader();
+program
+  .command('doctor')
+  .description('Check that the API key, quota and models are healthy')
+  .option('-k, --key <key>', 'Key to test instead of the configured one')
+  .option('-m, --model <model>', 'Model to test generation against')
+  .action(async (options) => {
+    banner(VERSION);
+    let failed = false;
 
-  const params = await setupScanParams();
-  if (cliTargetPath && cliTargetPath !== '.') params.targetPath = cliTargetPath;
+    log.step('Environment');
+    const nodeMajor = Number(process.versions.node.split('.')[0]);
+    if (nodeMajor >= 18) {
+      log.ok(`Node.js ${process.versions.node}`);
+    } else {
+      log.error(`Node.js ${process.versions.node} — VibeGuard needs >= 18 (global fetch).`);
+      failed = true;
+    }
 
-  console.log(`\n${HR}`);
-  console.log(` ${BOLD}${GREEN}▶${RESET} Starting VibeGuard Audit on: ${BOLD}${params.targetPath}${RESET}`);
-  console.log(`${HR}`);
+    log.step('API key');
+    const { key, source } = resolveApiKey(options.key);
+    if (!key) {
+      log.error('No Gemini API key found.');
+      log.detail(`Checked: --key flag, GEMINI_API_KEY, GOOGLE_API_KEY, ./.env, ${CONFIG_FILE}`);
+      log.detail('Get a free key at https://aistudio.google.com/apikey then run `vibeguard auth <key>`.');
+      log.plain('');
+      log.warn('Scans will still run, using the pattern engine only.');
+      process.exitCode = 1;
+      return;
+    }
+    log.ok(`Found ${BOLD}${maskKey(key)}${RESET} ${DIM}(from ${source})${RESET}`);
 
-  // Phase 1 — Supply Chain & Hallucination Auditor
-  logStep('Phase 1: Dependency Supply-Chain & Hallucination Audit');
-  await runSpinner('Extracting project imports & packages from package.json...', 1200);
-  logSuccess('Discovered 14 package dependencies in lockfile.');
-  await runSpinner('Auditing package metadata against public registry graphs...', 1800);
-  logWarning(`Suspicious package detected: ${BOLD}react-auth-vibe-helper${RESET}`);
-  console.log(`     ${RED}└─ Reason:${RESET} Package registered <2 hours ago. Total downloads: 0. Highly typical of AI hallucination supply-chain hijack.`);
+    log.step('Authentication');
+    const authSpinner = createSpinner('Listing available models…');
+    const probe = await probeKey(key);
+    if (!probe.ok) {
+      authSpinner.fail(probe.error.summary);
+      log.detail(probe.error.action);
+      process.exitCode = 1;
+      return;
+    }
+    authSpinner.succeed(`Key authenticates. ${probe.models.length} models support generateContent.`);
 
-  // Phase 2 — AST & Access Control
-  logStep('Phase 2: Static Call-Graph & Access Control Auditor');
-  await runSpinner('Building full Abstract Syntax Tree (AST) call graphs...', 1500);
-  logSuccess('Successfully parsed 38 local source files.');
-  await runSpinner('Mapping route structures to middleware guards...', 1500);
-  logWarning('Insecure Endpoint: POST /api/admin/system-reset');
-  console.log(`     ${RED}└─ Reason:${RESET} Exposes mutation methods but lacks any authentication middleware verification.`);
+    const model = resolveModel(options.model);
+    const available = probe.models.includes(model);
+    if (available) {
+      log.ok(`Configured model ${BOLD}${model}${RESET} is available.`);
+    } else {
+      log.warn(`Configured model ${BOLD}${model}${RESET} is not in this key's model list.`);
+      log.detail(`Available flash models: ${probe.models.filter((m) => m.includes('flash')).slice(0, 6).join(', ')}`);
+      failed = true;
+    }
 
-  // Phase 3 — Prompt Injection
-  logStep('Phase 3: AI Prompt Injection Boundary Audit');
-  await runSpinner('Scanning source files for LLM integration points...', 1200);
-  logSuccess('Found 2 LLM/OpenAI API configuration files.');
-  await runSpinner('Analyzing template strings for raw prompt string interpolation...', 1500);
-  logWarning('Vulnerable file: src/app/actions/chat.ts (line 22)');
-  console.log(`     ${YELLOW}└─ Reason:${RESET} Raw user input directly concatenated into LLM system instruction template.`);
+    log.step('Generation quota');
+    const genSpinner = createSpinner(`Sending a test request to ${model}…`);
+    const gen = await probeGeneration(key, available ? model : probe.models[0]);
+    if (gen.ok) {
+      genSpinner.succeed('Generation works — AI-assisted scanning is fully enabled.');
+    } else {
+      genSpinner.fail(gen.error.summary);
+      log.detail(gen.error.action);
+      failed = true;
+    }
 
-  // Phase 4 — Secrets & Defaults
-  logStep('Phase 4: Default Configurations & Secrets Audit');
-  await runSpinner('Searching file entropy for hardcoded secret signatures...', 1000);
-  logWarning('Hardcoded secret exposed: src/config/openai.js (line 8)');
-  console.log(`     ${RED}└─ Reason:${RESET} Hardcoded dev API key pattern matching 'sk-proj-vibe...' found.`);
-  await runSpinner('Validating CORS and cross-origin permission arrays...', 800);
-  logWarning('Permissive CORS settings: src/config/openai.js (line 7)');
-  console.log(`     ${YELLOW}└─ Reason:${RESET} 'Access-Control-Allow-Origin' set to wildcard '*'.`);
+    log.plain('');
+    if (failed) {
+      log.warn('VibeGuard will run, but the AI pass is degraded — see above.');
+      process.exitCode = 1;
+    } else {
+      log.ok(`${GREEN}${BOLD}Everything checks out.${RESET}`);
+    }
+    log.plain('');
+  });
 
-  // Phase 5 — Dynamic sandbox (full suite only)
-  if (params.depth === '3') {
-    logStep('Phase 5: Sandboxed Local Dry-Run (Dynamic Verification)');
-    await runSpinner('Launching application inside temporary container environment...', 2000);
-    logSuccess('Local web server running successfully inside sandbox.');
-    await runSpinner('Auditing live localhost headers and port exposures...', 1500);
-    logSuccess('No local dev port exposures found outside container boundary.');
+program.parseAsync(process.argv);
+
+// ------------------------------------------------------------------ runner
+
+async function runScan(targetPath, options) {
+  const started = Date.now();
+  const quiet = Boolean(options.quiet);
+  if (!quiet) banner(VERSION);
+
+  // ---- resolve target
+  const target = path.resolve(process.cwd(), targetPath || '.');
+  if (!fs.existsSync(target)) {
+    log.error(`Path not found: ${target}`);
+    process.exit(2);
+  }
+  if (!fs.statSync(target).isDirectory()) {
+    log.error(`Not a directory: ${target}`);
+    process.exit(2);
+  }
+  if (isDangerousRoot(target)) {
+    log.error(`Refusing to scan ${target} — point VibeGuard at a project folder, not a filesystem or home root.`);
+    process.exit(2);
   }
 
-  // Final — Report
-  logStep('Phase 5: Threat Modeling & Report Compilation');
-  await runSpinner('Synthesizing vulnerabilities and calculating Vibe Security Score...', 1200);
+  log.info(`Auditing ${BOLD}${target}${RESET}`);
 
-  const vulnerabilities = getSampleVulnerabilities();
-  generateReportFiles(vulnerabilities, process.cwd());
-  printSummaryBox(vulnerabilities);
+  // ---- discovery
+  const discover = createSpinner('Discovering source files…');
+  const { files: descriptors, skipped, truncated } = await collectFiles(target, {
+    maxFiles: Number(options.maxFiles) || 4000,
+  });
+  const files = await readFiles(descriptors);
+  const linesScanned = files.reduce((n, f) => n + f.content.split('\n').length, 0);
+
+  if (!files.length) {
+    discover.warn('No source files found to analyse.');
+    log.detail('VibeGuard reads code and config files; empty or fully-ignored directories yield nothing.');
+    process.exit(0);
+  }
+  discover.succeed(
+    `Read ${BOLD}${files.length}${RESET} files ${DIM}(${linesScanned.toLocaleString()} lines)${RESET}`
+  );
+  if (truncated) log.detail(`File limit reached — raise it with --max-files.`);
+  if (skipped.oversized) log.detail(`${skipped.oversized} oversized file(s) skipped.`);
+
+  // ---- static pass
+  const staticSpinner = createSpinner('Running pattern analysis…');
+  const staticFindings = scanAll(files);
+  staticSpinner.succeed(
+    staticFindings.length
+      ? `Pattern analysis found ${BOLD}${staticFindings.length}${RESET} issue(s)`
+      : 'Pattern analysis found no issues'
+  );
+
+  // ---- AI pass
+  let aiFindings = [];
+  let usedModel = null;
+
+  if (options.ai === false) {
+    log.info(`${DIM}AI review skipped (--no-ai).${RESET}`);
+  } else {
+    const { key, source } = resolveApiKey(options.key, target);
+    if (!key) {
+      log.warn('No Gemini API key — running pattern analysis only.');
+      log.detail(`Set one with ${CYAN}vibeguard auth <key>${RESET} (free key: https://aistudio.google.com/apikey)`);
+    } else {
+      const model = resolveModel(options.model);
+      const aiSpinner = createSpinner(`Gemini reviewing high-risk files with ${model}…`);
+
+      const result = await analyzeWithGemini({
+        files,
+        staticFindings,
+        apiKey: key,
+        model,
+        concurrency: Math.max(1, Number(options.concurrency) || 4),
+        budgetChars: Math.max(10_000, Number(options.aiBudget) || 400_000),
+        onProgress: (done, total) =>
+          aiSpinner.update(`Gemini reviewing high-risk files… ${DIM}batch ${done}/${total}${RESET}`),
+      });
+
+      if (result.model) {
+        usedModel = result.model;
+        aiFindings = result.findings;
+        aiSpinner.succeed(
+          aiFindings.length
+            ? `Gemini review found ${BOLD}${aiFindings.length}${RESET} additional issue(s) ${DIM}(${result.batches} batch${result.batches === 1 ? '' : 'es'}, ${result.model})${RESET}`
+            : `Gemini review found no additional issues ${DIM}(${result.model})${RESET}`
+        );
+        if (result.error) {
+          log.warn(`Some batches failed: ${result.error.summary}`);
+          log.detail(result.error.action);
+        }
+      } else {
+        aiSpinner.fail(result.error.summary);
+        log.detail(result.error.action);
+        log.detail(`Key in use: ${maskKey(key)} (from ${source})`);
+        log.warn('Continuing with pattern analysis only.');
+      }
+    }
+  }
+
+  // ---- merge, score, report
+  const findings = sortFindings(dedupe([...staticFindings, ...aiFindings]));
+  const score = scoreOf(findings, files.length);
+  const durationMs = Date.now() - started;
+
+  const written = writeReports({
+    targetDir: target,
+    findings,
+    score,
+    stats: { filesScanned: files.length, linesScanned, durationMs },
+    json: options.json !== false,
+    meta: {
+      version: VERSION,
+      scanTime: new Date().toISOString(),
+      target,
+      model: usedModel,
+      mdFilename: options.output,
+    },
+  });
+
+  if (quiet) {
+    console.log(`${score}/100 ${verdictOf(score).label} — ${findings.length} finding(s) — ${written[0]}`);
+  } else {
+    printSummary({ findings, score, stats: { filesScanned: files.length }, written, targetDir: target });
+    log.plain(`  ${DIM}Completed in ${(durationMs / 1000).toFixed(1)}s${RESET}\n`);
+  }
+
+  // ---- exit code
+  if (options.failOn) {
+    const threshold = String(options.failOn).toUpperCase();
+    const order = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+    if (!(threshold in order)) {
+      log.error(`Unknown --fail-on value "${options.failOn}". Use critical, high, medium or low.`);
+      process.exit(2);
+    }
+    const breached = findings.some((f) => (order[f.severity] ?? 9) <= order[threshold]);
+    if (breached) {
+      log.error(`Findings at or above ${threshold} — failing the build.`);
+      process.exit(1);
+    }
+  }
+}
+
+function isDangerousRoot(dir) {
+  const resolved = path.resolve(dir);
+  const home = process.env.HOME || process.env.USERPROFILE;
+  if (path.parse(resolved).root === resolved) return true;
+  if (home && path.resolve(home) === resolved) return true;
+  return false;
 }

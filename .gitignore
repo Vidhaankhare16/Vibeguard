@@ -2,7 +2,14 @@ node_modules/
 npm-debug.log*
 .DS_Store
 *.local
+.env
+.env.*
+!.env.example
+
+# VibeGuard scan artifacts
+SECURITY-REPORT.md
 vibeguard-report.json
 vibeguard-report.md
+
 .claude/
 .vercel/

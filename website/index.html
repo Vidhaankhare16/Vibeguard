@@ -54,8 +54,8 @@
         </h1>
 
         <p class="hero-sub">
-          One command. Extraordinary security audit. Taint analysis, slopsquatting detection,
-          BOLA scanning, git history secrets — 200+ checks purpose-built for AI-generated code.
+          One command. A pattern engine plus a Gemini review pass — unauthenticated endpoints,
+          leaked secrets, injection and prompt injection. The report lands in the folder you scanned.
         </p>
 
         <div class="install-pill">
@@ -75,13 +75,13 @@
 
         <div class="hero-stats">
           <div class="hero-stat">
-            <span class="hero-stat-num">200+</span>
-            <span class="hero-stat-label">Security checks</span>
+            <span class="hero-stat-num">30+</span>
+            <span class="hero-stat-label">Pattern rules</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
-            <span class="hero-stat-num">10</span>
-            <span class="hero-stat-label">Vulnerability layers</span>
+            <span class="hero-stat-num">2</span>
+            <span class="hero-stat-label">Analysis engines</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
@@ -110,22 +110,24 @@
             <div class="tl tc-cyan">
               &nbsp;╚██╗ ██╔╝██║██████╔╝█████╗  ██║  ███╗██║   ██║███████║██████╔╝██║  ██║
             </div>
-            <div class="tl tc-dim">&nbsp;  V I B E G U A R D  ·  Zero-Trust AI Code Auditor v1.0</div>
+            <div class="tl tc-dim">&nbsp;  v2.0.0 · Gemini-powered security auditing for AI-generated code</div>
             <div class="tl">&nbsp;</div>
-            <div class="tl tc-dim">  Running in non-interactive mode...</div>
-            <div class="tl tc-dim">  ✓ Phase 1: Supply-chain &amp; hallucination audit</div>
-            <div class="tl tc-dim">  ✓ Phase 2: AST call-graph &amp; access control</div>
-            <div class="tl tc-dim">  ✓ Phase 3: Prompt injection boundary audit</div>
-            <div class="tl tc-dim">  ✓ Phase 4: Secrets &amp; default config audit</div>
+            <div class="tl tc-dim">  ✓ Read 218 files (24,910 lines)</div>
+            <div class="tl tc-dim">  ✓ Pattern analysis found 19 issue(s)</div>
+            <div class="tl tc-dim">  ✓ Gemini review found 12 additional issue(s)</div>
             <div class="tl">&nbsp;</div>
-            <div class="tl"><span class="tc-red tc-bold">CRITICAL</span>&nbsp;&nbsp;<span class="tc-red">3 findings</span></div>
-            <div class="tl"><span class="tc-orange tc-bold">HIGH    </span>&nbsp;&nbsp;<span class="tc-orange">7 findings</span></div>
-            <div class="tl"><span class="tc-yellow tc-bold">MEDIUM  </span>&nbsp;&nbsp;<span class="tc-yellow">12 findings</span></div>
-            <div class="tl"><span class="tc-blue tc-bold">LOW     </span>&nbsp;&nbsp;<span class="tc-blue">9 findings</span></div>
+            <div class="tl tc-bold">Security score&nbsp;&nbsp;<span class="tc-red">32/100</span> <span class="tc-badge-crit">⚠ DANGEROUS</span></div>
             <div class="tl">&nbsp;</div>
-            <div class="tl tc-bold">Score: <span class="tc-red">32</span><span class="tc-dim">/100</span> <span class="tc-badge-crit">⚠ CRITICAL RISK</span></div>
+            <div class="tl"><span class="tc-red tc-bold">CRITICAL</span>&nbsp;&nbsp;<span class="tc-red">Missing authentication on a mutating API route</span></div>
+            <div class="tl tc-dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src/app/api/admin/reset/route.ts:4</div>
+            <div class="tl"><span class="tc-red tc-bold">CRITICAL</span>&nbsp;&nbsp;<span class="tc-red">Secret exposed to the client bundle</span></div>
+            <div class="tl tc-dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src/lib/stripe.ts:8</div>
+            <div class="tl"><span class="tc-orange tc-bold">HIGH    </span>&nbsp;&nbsp;<span class="tc-orange">Unsanitized user input interpolated into an LLM prompt</span></div>
+            <div class="tl tc-dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src/app/actions/chat.ts:22</div>
             <div class="tl">&nbsp;</div>
-            <div class="tl tc-dim">  Reports → vibeguard-report.json · vibeguard-report.md</div>
+            <div class="tl"><span class="tc-green">→</span> <span class="tc-cyan">SECURITY-REPORT.md</span></div>
+            <div class="tl"><span class="tc-green">→</span> <span class="tc-cyan">vibeguard-report.json</span></div>
+            <div class="tl tc-dim">&nbsp;&nbsp;Completed in 6.2s</div>
             <div class="tl"><span class="tc-cursor">█</span></div>
           </div>
         </div>
@@ -174,10 +176,10 @@
 
         <div class="feature-card feature-large">
           <div class="feature-icon">🔍</div>
-          <h3>Cross-file taint analysis</h3>
-          <p>Tracks untrusted data from every entry point — HTTP params, request bodies, env vars — through your entire codebase to dangerous sinks like SQL queries, shell commands, and file writes.</p>
+          <h3>Reads the code, not just patterns</h3>
+          <p>Regex finds the obvious. Gemini reads your highest-risk files end to end and reports the exploit path — where untrusted input enters, what it reaches, and why the guard that should stop it isn't there.</p>
           <div class="code-block">
-            <div class="code-label">Taint path detected</div>
+            <div class="code-label">Exploit path reported</div>
             <pre><code><span class="c-dim">// Entry: GET /api/orders/:id</span>
 <span class="c-red">req.params.id</span>  <span class="c-dim">← untrusted</span>
   → router.js:23
@@ -194,15 +196,15 @@
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">📦</div>
-          <h3>Slopsquatting detection</h3>
-          <p>AI tools hallucinate package names. Attackers register them. VibeGuard verifies every dependency against registries, checks download anomalies, and flags suspicious new packages.</p>
+          <div class="feature-icon">🔑</div>
+          <h3>Secrets, including leaked ones</h3>
+          <p>AWS, Google, OpenAI, Anthropic, GitHub, Stripe and database credentials in source — plus server secrets accidentally shipped to the browser through <code>NEXT_PUBLIC_</code>, <code>VITE_</code> and <code>REACT_APP_</code> prefixes.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🕰️</div>
-          <h3>Git history secrets</h3>
-          <p>A secret deleted from your codebase still lives in git history. VibeGuard scans every commit, including dangling objects from force pushes, and verifies whether found credentials are still active.</p>
+          <div class="feature-icon">🔓</div>
+          <h3>Unauthenticated endpoints</h3>
+          <p>The defect AI backends ship most often: a route that writes to the database with no session check anywhere in the file. VibeGuard flags every mutating handler that has no auth guard.</p>
         </div>
 
         <div class="feature-card">
@@ -214,27 +216,27 @@
         <div class="feature-card feature-large">
           <div class="feature-icon">📊</div>
           <h3>Reports built for developers</h3>
-          <p>Not a wall of CVE IDs. Every finding includes a CVSS score, the exact taint path, and a copy-paste ready fix. Exported as JSON for CI/CD and a shareable Markdown report.</p>
+          <p>Not a wall of CVE IDs. Every finding names the file and line, links the CWE, explains how it's exploited, and gives a copy-paste fix. Written into the folder you scanned as Markdown for your team and JSON for CI.</p>
           <div class="report-preview">
             <div class="report-row">
               <span class="severity-badge sev-critical">CRITICAL</span>
               <div class="report-row-info">
                 <div class="report-row-title">BOLA — Unauthenticated access to any user's data</div>
-                <div class="report-row-meta">src/api/users.js:47 · CVSS 9.8</div>
+                <div class="report-row-meta">src/api/users.js:47 · CWE-639</div>
               </div>
             </div>
             <div class="report-row">
               <span class="severity-badge sev-high">HIGH</span>
               <div class="report-row-info">
                 <div class="report-row-title">JWT algorithm confusion — alg:none accepted</div>
-                <div class="report-row-meta">src/middleware/auth.js:12 · CVSS 8.1</div>
+                <div class="report-row-meta">src/middleware/auth.js:12 · CWE-347</div>
               </div>
             </div>
             <div class="report-row">
               <span class="severity-badge sev-high">HIGH</span>
               <div class="report-row-info">
-                <div class="report-row-title">Active AWS key in git history (commit a3f9d2)</div>
-                <div class="report-row-meta">Verified live · CVSS 7.5</div>
+                <div class="report-row-title">Hardcoded AWS access key ID</div>
+                <div class="report-row-meta">src/config/aws.ts:8 · CWE-798</div>
               </div>
             </div>
           </div>
@@ -254,7 +256,7 @@
           <div class="step-num">01</div>
           <div class="step-body">
             <h3>Install &amp; run</h3>
-            <p>No config files. No accounts. No setup. Point it at your project directory and it figures out the rest — language, framework, dependencies, git history.</p>
+            <p>No config files. No accounts. No setup. Point it at your project directory and it figures out the rest — language, framework, and which files carry real risk.</p>
             <div class="cmd-snippet"><span class="cmd-prompt">$</span> npx @vidhaankhare/vibeguard scan .</div>
           </div>
         </div>
@@ -262,8 +264,8 @@
         <div class="step">
           <div class="step-num">02</div>
           <div class="step-body">
-            <h3>Deep analysis runs</h3>
-            <p>VibeGuard performs 4 phases of analysis in parallel — supply-chain hallucination detection, AST call-graph mapping, prompt injection boundary audit, and secrets scanning.</p>
+            <h3>Two engines run</h3>
+            <p>A deterministic pattern engine sweeps every file in under a second. Then the highest-risk files — routes, auth, config, LLM integrations — go to Gemini in parallel for the logic and authorization flaws patterns can't see.</p>
           </div>
         </div>
         <div class="step-connector"></div>
@@ -271,7 +273,7 @@
           <div class="step-num">03</div>
           <div class="step-body">
             <h3>Get your report</h3>
-            <p>A prioritized security report with CVSS scores, taint paths, and copy-paste fixes. Exported as JSON (for CI/CD) and Markdown (for your team). Security score included.</p>
+            <p>A prioritized report written straight into the folder you scanned — CWE references, the vulnerable line, and a copy-paste fix for each finding. Markdown for your team, JSON for CI, and a 0–100 security score.</p>
           </div>
         </div>
       </div>
@@ -331,11 +333,11 @@
             <span class="install-tag">CI/CD</span>
             <h3>GitHub Actions &amp; pipelines</h3>
           </div>
-          <p>Drop into any CI pipeline with <code>--yes</code> to skip interactive prompts. Works in GitHub Actions, GitLab CI, and more.</p>
+          <p>Fail the build on high-severity findings with <code>--fail-on</code>. Add <code>--no-ai</code> to keep runs deterministic and free. Works in GitHub Actions, GitLab CI, and more.</p>
           <div class="install-cmd-block">
             <span class="icp">$</span>
-            <span>npx @vidhaankhare/vibeguard scan . --yes</span>
-            <button class="copy-btn" onclick="copyToClipboard('npx @vidhaankhare/vibeguard scan . --yes')" title="Copy">
+            <span>npx @vidhaankhare/vibeguard scan . --fail-on high</span>
+            <button class="copy-btn" onclick="copyToClipboard('npx @vidhaankhare/vibeguard scan . --fail-on high')" title="Copy">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -356,71 +358,71 @@
         <div class="coverage-item">
           <span class="cov-num">01</span>
           <div class="cov-body">
-            <h4>AI-Specific Vulnerabilities</h4>
-            <p>Slopsquatting, AI pattern signatures, prompt injection, business logic flaws</p>
+            <h4>LLM &amp; AI Security</h4>
+            <p>Prompt injection, model output reaching eval/shell/DOM, unsafe LLM integration patterns</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">02</span>
           <div class="cov-body">
             <h4>Authorization &amp; Access Control</h4>
-            <p>BOLA/IDOR, broken function-level auth, mass assignment</p>
+            <p>Mutating routes with no auth guard, stubbed or hardcoded checks, public database rules</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">03</span>
           <div class="cov-body">
             <h4>Injection Vulnerabilities</h4>
-            <p>SQL, command, path traversal, SSRF, NoSQL injection</p>
+            <p>SQL concatenation, shell commands, eval, unsafe deserialization, NoSQL operator injection</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">04</span>
           <div class="cov-body">
             <h4>Secrets &amp; Credentials</h4>
-            <p>Live codebase, git history, dangling commits, live verification</p>
+            <p>Provider API keys, private keys, database URIs, secrets leaked into client bundles</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">05</span>
           <div class="cov-body">
             <h4>Authentication &amp; Sessions</h4>
-            <p>JWT flaws, session security, password handling, OAuth misconfig</p>
+            <p>JWTs decoded without verification, alg:none, insecure session cookie flags</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">06</span>
           <div class="cov-body">
-            <h4>Data Exposure</h4>
-            <p>Excessive API responses, sensitive data in transit, insecure file serving</p>
+            <h4>Cryptography</h4>
+            <p>MD5/SHA-1 password hashing, Math.random() for tokens, weak work factors</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">07</span>
           <div class="cov-body">
             <h4>Security Misconfiguration</h4>
-            <p>Missing headers, CORS, error handling, dependency CVEs</p>
+            <p>Wildcard CORS, disabled TLS verification, debug mode on, wildcard host allow-lists</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">08</span>
           <div class="cov-body">
-            <h4>Client-Side Vulnerabilities</h4>
-            <p>XSS, prototype pollution, insecure deserialization, clickjacking</p>
+            <h4>Cross-Site Scripting</h4>
+            <p>dangerouslySetInnerHTML, innerHTML from variables, document.write</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">09</span>
           <div class="cov-body">
             <h4>Infrastructure &amp; Deployment</h4>
-            <p>Cloud misconfig, container security, CI/CD pipeline secrets</p>
+            <p>Containers running as root, --privileged, chmod 777, committed .env files</p>
           </div>
         </div>
         <div class="coverage-item">
           <span class="cov-num">10</span>
           <div class="cov-body">
-            <h4>Supply Chain</h4>
-            <p>Dependency confusion, typosquatting, license compliance</p>
+            <h4>Logic &amp; Data Exposure</h4>
+            <p>Business logic flaws, missing ownership checks and over-broad responses, found by the Gemini pass</p>
           </div>
         </div>
       </div>
