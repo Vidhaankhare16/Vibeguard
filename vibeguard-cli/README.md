@@ -152,7 +152,7 @@ files that were analysed.
 
 ```bash
 npm install
-npm test        # 71 assertions across detection, scoring, reporting and the Gemini transport — no network
+npm test        # 75 assertions across detection, scoring, reporting and the Gemini transport — no network
 npm start       # scan the current directory
 ```
 

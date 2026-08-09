@@ -57,7 +57,8 @@ function groupByFile(findings) {
 
 export function buildMarkdown({ findings, score, stats, meta }) {
   const counts = countBySeverity(findings);
-  const verdict = verdictOf(score);
+  const aiRan = Boolean(meta.model);
+  const verdict = verdictOf(score, aiRan);
   const total = findings.length;
   const grouped = groupByFile(findings);
 
@@ -75,17 +76,37 @@ export function buildMarkdown({ findings, score, stats, meta }) {
   push('');
 
   // ---- verdict block
-  push(`## Verdict: ${score}/100 — ${verdict.label}`);
+  // A score is meaningful when findings exist. It is only misleading in the
+  // one case where a half-run scan found nothing — so drop it there alone.
+  push(
+    verdict.partial && total === 0
+      ? `## Verdict: ${verdict.label} — pattern analysis only`
+      : `## Verdict: ${score}/100 — ${verdict.label}`
+  );
   push('');
   push(`> ${verdict.blurb}`);
   push('');
 
-  if (total === 0) {
-    push('No vulnerabilities were identified in this scan.');
+  if (!aiRan) {
+    push('> [!WARNING]');
+    push('> **AI review did not run for this scan.** The pattern engine matches known-bad');
+    push('> code shapes; it cannot reason about whether a record belongs to the caller,');
+    push('> whether a balance check is atomic, or whether a request body is over-trusted.');
+    push('> Enable the AI pass with `vibeguard auth <key>` (free key:');
+    push('> https://aistudio.google.com/apikey) and re-scan for full coverage.');
     push('');
-    push('This is not a proof of safety — it means neither the pattern engine nor the');
-    push('AI reviewer found a issue in the files that were analysed. Re-scan after');
-    push('significant changes, and keep dependency auditing (`npm audit`) in your pipeline.');
+  }
+
+  if (total === 0) {
+    push(
+      aiRan
+        ? 'No vulnerabilities were identified in this scan.'
+        : 'Nothing matched the pattern rules. That is not the same as being secure — see the warning above.'
+    );
+    push('');
+    push('A clean result is not proof of safety. It means nothing was found in the files');
+    push('that were analysed. Re-scan after significant changes, and keep dependency');
+    push('auditing (`npm audit`) in your pipeline.');
     push('');
     return lines.join('\n');
   }
@@ -204,7 +225,8 @@ export function writeReports({ targetDir, findings, score, stats, meta, json = t
           filesScanned: stats.filesScanned,
           linesScanned: stats.linesScanned,
           securityScore: score,
-          verdict: verdictOf(score).label,
+          verdict: verdictOf(score, Boolean(meta.model)).label,
+          coverage: meta.model ? 'static+ai' : 'static-only',
           vulnerabilityCounts: countBySeverity(findings),
           vulnerabilities: findings,
         },
@@ -221,18 +243,27 @@ export function writeReports({ targetDir, findings, score, stats, meta, json = t
 
 // ------------------------------------------------------------------ terminal
 
-export function printSummary({ findings, score, stats, written, targetDir }) {
+export function printSummary({ findings, score, stats, written, targetDir, aiRan = true }) {
   const counts = countBySeverity(findings);
-  const verdict = verdictOf(score);
-  const scoreColor = score >= 75 ? BRIGHT_GREEN : score >= 50 ? BRIGHT_YELLOW : BRIGHT_RED;
+  const verdict = verdictOf(score, aiRan);
+  const scoreColor = verdict.partial ? BRIGHT_YELLOW : score >= 75 ? BRIGHT_GREEN : score >= 50 ? BRIGHT_YELLOW : BRIGHT_RED;
 
   console.log('');
-  console.log(`  ${BOLD}Security score${RESET}  ${scoreColor}${BOLD}${score}/100${RESET} ${DIM}·${RESET} ${scoreColor}${verdict.label}${RESET}`);
+  if (verdict.partial && findings.length === 0) {
+    // No score at all here — a number is exactly what would mislead.
+    console.log(`  ${BOLD}Result${RESET}  ${scoreColor}${BOLD}${verdict.label}${RESET} ${DIM}·${RESET} ${DIM}pattern analysis only${RESET}`);
+  } else {
+    console.log(`  ${BOLD}Security score${RESET}  ${scoreColor}${BOLD}${score}/100${RESET} ${DIM}·${RESET} ${scoreColor}${verdict.label}${RESET}`);
+  }
   console.log(`  ${DIM}${verdict.blurb}${RESET}`);
   console.log('');
 
   if (findings.length === 0) {
-    console.log(`  ${GREEN}No vulnerabilities found across ${stats.filesScanned} files.${RESET}`);
+    console.log(
+      aiRan
+        ? `  ${GREEN}No vulnerabilities found across ${stats.filesScanned} files.${RESET}`
+        : `  ${YELLOW}Nothing matched the pattern rules across ${stats.filesScanned} files.${RESET}\n  ${DIM}Logic and authorization flaws need the AI pass — they were not checked.${RESET}`
+    );
   } else {
     const parts = [];
     for (const severity of ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']) {

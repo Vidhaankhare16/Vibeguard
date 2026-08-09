@@ -107,6 +107,22 @@ test('verdict labels track score', () => {
   assert.equal(verdictOf(100).label, 'STRONG');
   assert.equal(verdictOf(10).label, 'CRITICAL');
 });
+test('a quiet pattern-only scan is not called STRONG', () => {
+  const v = verdictOf(100, false);
+  assert.equal(v.label, 'INCOMPLETE');
+  assert.equal(v.partial, true);
+  assert.match(v.blurb, /not a clean bill of health/i);
+});
+test('pattern-only scan with findings keeps its severity label but flags coverage', () => {
+  const v = verdictOf(30, false);
+  assert.equal(v.label, 'DANGEROUS');
+  assert.equal(v.partial, true);
+  assert.match(v.blurb, /AI review did not run/i);
+});
+test('a scan with AI is never marked partial', () => {
+  assert.equal(verdictOf(100, true).partial, undefined);
+  assert.equal(verdictOf(30, true).partial, undefined);
+});
 test('dedupe collapses same file/line/category', () => {
   const a = { file: 'a.js', line: 3, category: 'Secrets', source: 'static', severity: 'HIGH' };
   const b = { file: 'a.js', line: 3, category: 'Secrets', source: 'gemini', severity: 'HIGH', description: 'x' };
@@ -136,13 +152,25 @@ test('markdown renders findings', () => {
   assert.ok(md.includes('Rotate it.'));
   assert.ok(md.includes('40/100'));
 });
-test('markdown handles zero findings', () => {
+test('markdown handles zero findings with AI', () => {
   const md = buildMarkdown({
     findings: [], score: 100,
     stats: { filesScanned: 3, linesScanned: 90, durationMs: 10 },
     meta: { target: '/tmp/app', scanTime: new Date().toISOString(), version: '2.0.0', model: 'gemini-3.6-flash' },
   });
   assert.ok(md.includes('No vulnerabilities were identified'));
+  assert.ok(!md.includes('AI review did not run'), 'must not warn when AI did run');
+});
+test('markdown warns loudly when AI did not run', () => {
+  const md = buildMarkdown({
+    findings: [], score: 100,
+    stats: { filesScanned: 3, linesScanned: 90, durationMs: 10 },
+    meta: { target: '/tmp/app', scanTime: new Date().toISOString(), version: '2.0.0', model: null },
+  });
+  assert.ok(md.includes('AI review did not run'), 'missing coverage warning');
+  assert.ok(md.includes('[!WARNING]'), 'missing callout');
+  assert.ok(!md.includes('100/100'), 'must not headline a perfect score on a half scan');
+  assert.ok(md.includes('INCOMPLETE'));
 });
 
 console.log('\nGemini layer (offline)');

@@ -592,10 +592,40 @@ export function scoreOf(findings, fileCount) {
   return Math.max(0, Math.min(100, Math.round(100 - penalty * scale)));
 }
 
-export function verdictOf(score) {
-  if (score >= 90) return { label: 'STRONG', blurb: 'No serious issues surfaced. Keep scanning as the codebase grows.' };
-  if (score >= 75) return { label: 'FAIR', blurb: 'A few real weaknesses to close, but nothing that blocks a careful release.' };
-  if (score >= 50) return { label: 'AT RISK', blurb: 'Meaningful vulnerabilities are present. Fix the high-severity findings before deploying.' };
-  if (score >= 25) return { label: 'DANGEROUS', blurb: 'Multiple exploitable issues. This codebase should not face the public internet as-is.' };
-  return { label: 'CRITICAL', blurb: 'Severe, directly exploitable vulnerabilities. Treat any deployed instance as already compromised.' };
+/**
+ * The pattern engine cannot see authorization gaps, broken ownership checks or
+ * logic flaws — only the AI pass can. So a pattern-only scan that finds nothing
+ * must not report a clean bill of health: on a fixture containing IDOR, mass
+ * assignment and a double-spend race, the pattern engine correctly returns zero,
+ * and a naive verdict turns that into "100/100 STRONG". Since running without a
+ * key is the default, that reassuring green score is what most users would see.
+ *
+ * `aiRan: false` therefore downgrades a quiet result to an explicit statement of
+ * what was not checked, rather than a score implying it was.
+ */
+export function verdictOf(score, aiRan = true) {
+  if (!aiRan && score >= 90) {
+    return {
+      label: 'INCOMPLETE',
+      blurb:
+        'Nothing matched the pattern rules — but AI review did not run, so authorization gaps, broken ownership checks and logic flaws were never checked. This is not a clean bill of health.',
+      partial: true,
+    };
+  }
+
+  const verdict =
+    score >= 90 ? { label: 'STRONG', blurb: 'No serious issues surfaced. Keep scanning as the codebase grows.' }
+    : score >= 75 ? { label: 'FAIR', blurb: 'A few real weaknesses to close, but nothing that blocks a careful release.' }
+    : score >= 50 ? { label: 'AT RISK', blurb: 'Meaningful vulnerabilities are present. Fix the high-severity findings before deploying.' }
+    : score >= 25 ? { label: 'DANGEROUS', blurb: 'Multiple exploitable issues. This codebase should not face the public internet as-is.' }
+    : { label: 'CRITICAL', blurb: 'Severe, directly exploitable vulnerabilities. Treat any deployed instance as already compromised.' };
+
+  if (!aiRan) {
+    return {
+      ...verdict,
+      partial: true,
+      blurb: `${verdict.blurb} Pattern analysis only — AI review did not run, so logic and authorization flaws are not covered.`,
+    };
+  }
+  return verdict;
 }

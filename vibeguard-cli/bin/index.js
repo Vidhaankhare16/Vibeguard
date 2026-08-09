@@ -17,7 +17,7 @@ import {
 } from '../lib/config.js';
 import { banner, log, createSpinner, BOLD, DIM, RESET, CYAN, YELLOW, GREEN, RED } from '../lib/ui.js';
 
-const VERSION = '2.0.1';
+const VERSION = '2.0.2';
 const program = new Command();
 
 program
@@ -294,9 +294,11 @@ async function runScan(targetPath, options) {
   });
 
   if (quiet) {
-    console.log(`${score}/100 ${verdictOf(score).label} — ${findings.length} finding(s) — ${written[0]}`);
+    const v = verdictOf(score, Boolean(usedModel));
+    const head = v.partial && findings.length === 0 ? v.label : `${score}/100 ${v.label}`;
+    console.log(`${head} — ${findings.length} finding(s) — ${written[0]}`);
   } else {
-    printSummary({ findings, score, stats: { filesScanned: files.length }, written, targetDir: target });
+    printSummary({ findings, score, stats: { filesScanned: files.length }, written, targetDir: target, aiRan: Boolean(usedModel) });
     log.plain(`  ${DIM}Completed in ${(durationMs / 1000).toFixed(1)}s${RESET}\n`);
   }
 
